@@ -9,6 +9,7 @@ on .vtk, .ply, or .stl files.
 """
 
 def organizeSubjsFiles(directory):
+    #get a list of the subjects and files to landmark
     import glob
     import os
     subjlist = []
@@ -19,6 +20,9 @@ def organizeSubjsFiles(directory):
     return subjlist,filelist
 
 def choose_fixedLandmarks(file_name,template=[]):
+    #place fixed landmarks on 3D model
+    #left click to place, right click to remove
+    #can display a template for aiding placement
     import vtk
     from dipy.viz import window
     import numpy as np
@@ -201,6 +205,7 @@ def choose_fixedLandmarks(file_name,template=[]):
     
 
 def show_fixedLandmarks(file_name, landmarks):
+    #show the landmarks on the 3D model
     import vtk
     from dipy.viz import window
             
@@ -265,6 +270,8 @@ def show_fixedLandmarks(file_name, landmarks):
     show_m.start()
 
 def choose_curveLandmarks(file_name, fixedLandmarks = []):
+    #Place curve landmarks
+    #can display fixed landmarks for aiding placement
     import vtk
     from dipy.viz import window
     import numpy as np
@@ -432,6 +439,7 @@ def choose_curveLandmarks(file_name, fixedLandmarks = []):
     
 
 def show_curveLandmarks(file_name, landmarks):
+    #show the curve landmarks on the 3D model
     import vtk
 #    from vtk.util.numpy_support import vtk_to_numpy
     from dipy.viz import window
@@ -517,12 +525,11 @@ def show_allLandmarks(file_name, fixedLandmarks, curveLandmarks):
     # input the curve landmarks in a list: curveLandmarks = [curve1, curve2]    
     #if you dont wish to input both fixed and curve landmarks you can 
     # place a [] as the input
+    #shows all the landmarks on the 3D model
     import vtk
 #    from vtk.util.numpy_support import vtk_to_numpy
     from dipy.viz import window
     #import os
-    
-    
     
     # Read the surface from file
     if file_name[-3:] == 'vtk':
@@ -649,6 +656,7 @@ def resampleCurve(curve, npoints, includeFixed=False, fixedLandmarks = [], fixed
     return resampledcurve
     
 def saveLandmarks_tps(tpsfilename,subjlist,fixedLandmarksdict, curveLandmarksdict):
+    #saves the landmark coordinates in tps format
     tpsfile = open(tpsfilename+'.tps','w') 
     for subj in range(len(subjlist)):
         #get total number of landmarks        
@@ -666,6 +674,7 @@ def saveLandmarks_tps(tpsfilename,subjlist,fixedLandmarksdict, curveLandmarksdic
     tpsfile.close()
 
 def saveLandmarks_pkl(pklfilename, subjlist, fixedLandmarksDict,curvelandmarksDict):
+    #saves the landmarks for python in pickle format
     import pickle
     pkldict = {}
     pkldict['subjlist']=subjlist
@@ -675,7 +684,7 @@ def saveLandmarks_pkl(pklfilename, subjlist, fixedLandmarksDict,curvelandmarksDi
     pickle.dump( pkldict, open( pklfilename+".p", "wb" ) )
 
 def saveLandmarks_vtk(subjlist, landmarkDict):
-    #saves .vtk for single subject
+    #saves .vtk with the landmarks for single subject
     import vtk 
     
     for i in range(len(subjlist)):
@@ -694,6 +703,7 @@ def saveLandmarks_vtk(subjlist, landmarkDict):
         writer.Write()
 
 def loadLandmarks_pkl(pklfilename):
+    #load pickle landmarks
     import pickle
     pkldict = pickle.load( open(pklfilename , "rb" ) )
     subjlist = pkldict['subjlist']
@@ -702,6 +712,7 @@ def loadLandmarks_pkl(pklfilename):
     return subjlist, fixedLandmarksDict, curvelandmarksDict
     
 def loadLandmarks_tps(tpsfilename):
+    #loads tps landmarks
     import numpy as np
 
     """
@@ -770,6 +781,7 @@ def loadLandmarks_tps(tpsfilename):
     return subjlist, allLandmarksDict
   
 def define_slidingLandmarks(fixedLandmarks, curveLandmarks,fixedStart_list, fixedEnd_list):
+    #define which landmarks slide
     import pandas as pd 
     import numpy as np    
     curves = []
@@ -795,6 +807,7 @@ def define_slidingLandmarks(fixedLandmarks, curveLandmarks,fixedStart_list, fixe
             
   
 def plotAllSubjectLandmarks(subjlist,fixedLandmarkDict, curveLandmarkDict, treatfixedascurve=False, sphereradius=1, group=[]):
+    #show landmarks for all subjects, uses different color for each subject
     import vtk
     from dipy.viz import window
     import numpy as np

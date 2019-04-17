@@ -19,7 +19,8 @@ def organizeSubjsFiles(directory):
     return subjlist,filelist
 
 def choose_fixedLandmarks(file_name,template=[]):
-    #displays the 3D model and allows you to place fixed landmarks on locations clicked. 
+    #displays the 3D model and allows you to place fixed landmarks on locations clicked.
+    #left click to place, right click to remove
     #returns an array of the landmark coordinates
     import vtk
     from dipy.viz import window

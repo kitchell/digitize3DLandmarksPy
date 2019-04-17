@@ -9,6 +9,7 @@ on .vtk, .ply, or .stl files.
 """
 
 def organizeSubjsFiles(directory):
+    #get a list of the subjects and files to place landmarks on
     import glob
     import os
     subjlist = []
@@ -21,6 +22,7 @@ def organizeSubjsFiles(directory):
 def choose_fixedLandmarks(file_name,template=[]):
     #displays the 3D model and allows you to place fixed landmarks on locations clicked.
     #left click to place, right click to remove
+    #can display a template to aid in landmark placement
     #returns an array of the landmark coordinates
     import vtk
     from dipy.viz import window

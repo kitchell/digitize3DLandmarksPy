@@ -22,11 +22,10 @@ def choose_fixedLandmarks(file_name,template=[]):
     import vtk
     from dipy.viz import window
     import numpy as np
-    #import os
+
     
-    
-    
-    # Read the surface from file
+
+    # import the 3D surface from file
     if file_name[-3:] == 'vtk':
         object = vtk.vtkPolyDataReader()
     if file_name[-3:] == 'ply':
@@ -42,6 +41,7 @@ def choose_fixedLandmarks(file_name,template=[]):
     objectActor=vtk.vtkActor()
     objectActor.SetMapper(objectMapper)
     objectActor.GetProperty().SetColor(0.5,0.5,0.5) # grey
+    #left over from other work, don't delete yet    
     #objectActor.GetProperty().SetColor(.24, .70, .44) #mediumseagreen
     #objectActor.GetProperty().SetColor(0.498039, 1, 0.831373) #springgreen
     #objectActor.GetProperty().SetColor(color[0],color[1],color[2])
@@ -67,15 +67,20 @@ def choose_fixedLandmarks(file_name,template=[]):
     #    iren.Start()
     #    
     #   
-    renderer = window.Renderer()
     
+    #create render window    
+    renderer = window.Renderer()
+    #add 3D surface to window
     renderer.add(objectActor)
     
+    #initialize landmarks
     landmarks = []
     
+    #initialize dictionary for tying landmarks to annotations
     actortextdict = {}
     
     def mark(x,y,z):
+        #function for placing a landmark sphere
         sphere = vtk.vtkSphereSource()
         sphere.SetRadius(1)
         res = 20
@@ -106,7 +111,7 @@ def choose_fixedLandmarks(file_name,template=[]):
         show_m.iren.Render()
     
     def pick_cell(renwinInteractor, event):
-    
+        #function for placing a landmark at mouse click position
         x, y = renwinInteractor.GetEventPosition()
     
         picker = vtk.vtkCellPicker()
@@ -123,6 +128,7 @@ def choose_fixedLandmarks(file_name,template=[]):
     
         
     def remove_cell(renwinInteractor, event):
+        #function for removing a landmark at mouse click position
         x, y = renwinInteractor.GetEventPosition()
         
         picker = vtk.vtkPropPicker()
@@ -146,6 +152,7 @@ def choose_fixedLandmarks(file_name,template=[]):
                 
     
     def marktemplate(x,y,z,landnum):
+        #function for placing template landmarks
         sphere = vtk.vtkSphereSource()
         sphere.SetRadius(1)
         res = 20
@@ -195,12 +202,8 @@ def choose_fixedLandmarks(file_name,template=[]):
 
 def show_fixedLandmarks(file_name, landmarks):
     import vtk
-#    from vtk.util.numpy_support import vtk_to_numpy
     from dipy.viz import window
-    #import os
-    
-    
-    
+            
     # Read the surface from file
     if file_name[-3:] == 'vtk':
         object = vtk.vtkPolyDataReader()
@@ -645,23 +648,126 @@ def resampleCurve(curve, npoints, includeFixed=False, fixedLandmarks = [], fixed
         resampledcurve=resampledcurve[1:-1]
     return resampledcurve
     
-def saveLandmarks_tps(tpsfilename,subjnames,fixedLandmarkslist, curveLandmarkslist):
+def saveLandmarks_tps(tpsfilename,subjlist,fixedLandmarksdict, curveLandmarksdict):
     tpsfile = open(tpsfilename+'.tps','w') 
-    for subj in range(len(subjnames)):
+    for subj in range(len(subjlist)):
         #get total number of landmarks        
-        nlandmarks = len(fixedLandmarkslist[subj])        
-        for c in curveLandmarkslist[subj]:
+        nlandmarks = len(fixedLandmarksdict[subjlist[subj]])        
+        for c in curveLandmarksdict[subjlist[subj]]:
             nlandmarks = nlandmarks + len(c)
         
-        
         tpsfile.write('LM3='+str(nlandmarks)+'\n')
-        for i in range(len(fixedLandmarkslist[subj])):
-            tpsfile.write(str(fixedLandmarkslist[subj][i][0])+''+str(fixedLandmarkslist[subj][i][1])+''+str(fixedLandmarkslist[subj][i][2])+'\n')
-        for c in curveLandmarkslist[subj]:
+        for i in range(len(fixedLandmarksdict[subjlist[subj]])):
+            tpsfile.write(str(fixedLandmarksdict[subjlist[subj]][i][0])+' '+str(fixedLandmarksdict[subjlist[subj]][i][1])+' '+str(fixedLandmarksdict[subjlist[subj]][i][2])+'\n')
+        for c in curveLandmarksdict[subjlist[subj]]:
             for i in range(len(c)):
-               tpsfile.write(str(c[i][0])+''+str(c[i][1])+''+str(c[i][2])+'\n') 
-        tpsfile.write('ID='+subjnames[subj]+'\n'+'\n')
+               tpsfile.write(str(c[i][0])+' '+str(c[i][1])+' '+str(c[i][2])+'\n') 
+        tpsfile.write('ID='+subjlist[subj]+'\n'+'\n')
     tpsfile.close()
+
+def saveLandmarks_pkl(pklfilename, subjlist, fixedLandmarksDict,curvelandmarksDict):
+    import pickle
+    pkldict = {}
+    pkldict['subjlist']=subjlist
+    pkldict['fixedLandmarksDict']=fixedLandmarksDict
+    pkldict['curvelandmarksDict']=curvelandmarksDict
+    
+    pickle.dump( pkldict, open( pklfilename+".p", "wb" ) )
+
+def saveLandmarks_vtk(subjlist, landmarkDict):
+    #saves .vtk for single subject
+    import vtk 
+    
+    for i in range(len(subjlist)):
+        landmarks = landmarkDict[subjlist[i]]        
+        vtkfilename = subjlist[i]+'_landmarks.vtk'        
+        
+        Points = vtk.vtkPoints()
+        for i in range(len(landmarks)):
+            Points.InsertNextPoint(landmarks[i][0],landmarks[i][1],landmarks[i][2])
+        
+        polydata = vtk.vtkPolyData()
+        polydata.SetPoints(Points)
+        writer = vtk.vtkDataSetWriter()
+        writer.SetFileName(vtkfilename)
+        writer.SetInputData(polydata)
+        writer.Write()
+
+def loadLandmarks_pkl(pklfilename):
+    import pickle
+    pkldict = pickle.load( open(pklfilename , "rb" ) )
+    subjlist = pkldict['subjlist']
+    fixedLandmarksDict = pkldict['fixedLandmarksDict']
+    curvelandmarksDict = pkldict['curvelandmarksDict']
+    return subjlist, fixedLandmarksDict, curvelandmarksDict
+    
+def loadLandmarks_tps(tpsfilename):
+    import numpy as np
+
+    """
+    Function to read a .TPS file
+    Args:
+        tpsfilename (str): path to the .TPS file
+    Returns:
+        lm (str list): info extracted from 'LM=' field
+        im (str list): info extracted from 'IMAGE=' field
+        id (str list): info extracted from 'ID=' filed
+        coords: returns a 3D numpy array if all the individuals have same
+                number of landmarks, otherwise returns a list containing 2d
+                matrices of landmarks
+    edited from this source: 
+    https://gist.github.com/jinyung/1b8fe5735fbfdf07378197cc4c9acc3a
+    """
+
+    # open the file
+    tps_file = open(tpsfilename, 'r')  # 'r' = read
+    tps = tps_file.read().splitlines()  # read as lines and split by new lines
+    tps_file.close()
+
+    # initiate lists to take fields of "LM=","IMAGE=", "ID=" and the coords
+    lm, im, ID, coords_array = [], [], [], []
+
+    # looping thru the lines
+    for i, ln in enumerate(tps):
+
+        # Each individual starts with "LM="
+        if ln.startswith("LM"):
+            # number of landmarks of this ind
+            lm_num = int(ln.split('=')[1])
+            # fill the info to the list for all inds
+            lm.append(lm_num)
+            # initiate a list to take 2d coordinates
+            coords_mat = []
+
+            # fill the coords list by reading next lm_num of lines
+            for j in range(i + 1, i + 1 + lm_num):
+                coords_mat.append(tps[j].split(' '))  # split lines into values
+
+            # change the list into a numpy matrix storing float vals
+            coords_mat = np.array(coords_mat, dtype=float)
+            # fill the ind 2d matrix into the 3D coords array of all inds
+            coords_array.append(coords_mat)
+            # coords_array.append(coords_mat)
+
+        # Get info of IMAGE= and ID= fields
+        if ln.startswith("IMAGE"):
+            im.append(ln.split('=')[1])
+
+        if ln.startswith("ID"):
+            ID.append(ln.split('=')[1])
+
+    # check if all inds contains same number of landmarks
+#    all_lm_same = all(x == lm[0] for x in lm)
+    # if all same change the list into a 3d numpy array
+#    if all_lm_same:
+#        coords_array = np.dstack(coords_array)
+
+    subjlist = ID
+    allLandmarksDict = {}
+    for i in range(len(subjlist)):
+        allLandmarksDict[subjlist[i]] = coords_array[i]
+    # return results in dictionary form
+    return subjlist, allLandmarksDict
   
 def define_slidingLandmarks(fixedLandmarks, curveLandmarks,fixedStart_list, fixedEnd_list):
     import pandas as pd 
@@ -687,4 +793,96 @@ def define_slidingLandmarks(fixedLandmarks, curveLandmarks,fixedStart_list, fixe
     df.to_csv("curveslide.csv",header=['before', 'slide', 'after'])
     return curves
             
+  
+def plotAllSubjectLandmarks(subjlist,fixedLandmarkDict, curveLandmarkDict, treatfixedascurve=False, sphereradius=1, group=[]):
+    import vtk
+    from dipy.viz import window
+    import numpy as np
+
+    def markcurve(x,y,z,landnum, curve, color):
+        sphere = vtk.vtkSphereSource()
+        sphere.SetRadius(sphereradius)
+        res = 20
+        sphere.SetThetaResolution(res)
+        sphere.SetPhiResolution(res)
+        sphere.SetCenter(x,y,z)
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(sphere.GetOutputPort())
     
+        marker = vtk.vtkActor()
+        marker.SetMapper(mapper)
+        renderer.AddActor(marker)
+        marker.GetProperty().SetColor( color )
+                
+        
+        #add line
+        if landnum > 0:
+            lineSource = vtk.vtkLineSource()
+            lineSource.SetPoint1(curve[landnum-1])
+            lineSource.SetPoint2([x,y,z])
+            mapper = vtk.vtkPolyDataMapper()
+            mapper.SetInputConnection(lineSource.GetOutputPort())
+            lineActor = vtk.vtkActor()
+            lineActor.SetMapper(mapper)
+            lineActor.GetProperty().SetLineWidth(4)
+            lineActor.GetProperty().SetColor(color)
+            renderer.AddActor(lineActor)
+            
+        show_m.iren.Render()
+
+    def markfixed(x,y,z, color):
+        sphere = vtk.vtkSphereSource()
+        sphere.SetRadius(sphereradius)
+        res = 20
+        sphere.SetThetaResolution(res)
+        sphere.SetPhiResolution(res)
+        sphere.SetCenter(x,y,z)
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(sphere.GetOutputPort())
+    
+        marker = vtk.vtkActor()
+        marker.SetMapper(mapper)
+        renderer.AddActor(marker)
+        marker.GetProperty().SetColor( color )
+        
+        show_m.iren.Render()
+
+    renderer = window.Renderer()
+    show_m = window.ShowManager(renderer, size=(800, 800))
+    
+    colorlist = []
+    if group:
+        ngroups = len(np.unique(group))
+        grpcolors = []
+        for i in range(ngroups):
+            grpcolors.append(list(np.random.choice(range(256), size=3)/256.))
+        for i in range(len(group)):
+            colorlist.append(grpcolors[list(np.unique(group)).index(group[i])])
+    else:        
+        for i in range(len(subjlist)):   
+            colorlist.append(list(np.random.choice(range(256), size=3)/256.))    
+    
+    for subj in range(len(subjlist)):
+        
+        color = colorlist[subj]
+
+        if type(fixedLandmarkDict) is dict:
+            if treatfixedascurve:        
+                for lnum in range(len(fixedLandmarkDict[subjlist[subj]])):
+                    lm = fixedLandmarkDict[subjlist[subj]][lnum]
+                    markcurve(lm[0], lm[1], lm[2], lnum, fixedLandmarkDict[subjlist[subj]], color)
+            else:
+                for lnum in range(len(fixedLandmarkDict[subjlist[subj]])):
+                    lm = fixedLandmarkDict[subjlist[subj]][lnum]
+                    markfixed(lm[0], lm[1], lm[2], color)
+        if type(curveLandmarkDict) is dict:
+            for c in curveLandmarkDict[subjlist[subj]]:
+                for lnum in range(len(c)):
+                    lm = c[lnum]
+                    markcurve(lm[0], lm[1], lm[2], lnum, c, color)
+
+                
+    show_m.initialize()
+    show_m.render()
+    show_m.start()
+        

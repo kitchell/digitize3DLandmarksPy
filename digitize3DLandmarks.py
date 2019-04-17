@@ -19,12 +19,12 @@ def organizeSubjsFiles(directory):
     return subjlist,filelist
 
 def choose_fixedLandmarks(file_name,template=[]):
+    #displays the 3D model and allows you to place fixed landmarks on locations clicked. 
+    #returns an array of the landmark coordinates
     import vtk
     from dipy.viz import window
     import numpy as np
     #import os
-    
-    
     
     # Read the surface from file
     if file_name[-3:] == 'vtk':
@@ -194,6 +194,7 @@ def choose_fixedLandmarks(file_name,template=[]):
     
 
 def show_fixedLandmarks(file_name, landmarks):
+    #display the fixed landmarks on the 3D model
     import vtk
 #    from vtk.util.numpy_support import vtk_to_numpy
     from dipy.viz import window
@@ -262,6 +263,8 @@ def show_fixedLandmarks(file_name, landmarks):
     show_m.start()
 
 def choose_curveLandmarks(file_name, fixedLandmarks = []):
+    #displays the 3d model and allows you to place landmarks along a curve
+    #can show fixed landmarks to aid in curve landmark placement
     import vtk
     from dipy.viz import window
     import numpy as np
@@ -429,6 +432,7 @@ def choose_curveLandmarks(file_name, fixedLandmarks = []):
     
 
 def show_curveLandmarks(file_name, landmarks):
+    #will displacy curve landmarks on the 3D model
     import vtk
 #    from vtk.util.numpy_support import vtk_to_numpy
     from dipy.viz import window
@@ -646,6 +650,7 @@ def resampleCurve(curve, npoints, includeFixed=False, fixedLandmarks = [], fixed
     return resampledcurve
     
 def saveLandmarks_tps(tpsfilename,subjnames,fixedLandmarkslist, curveLandmarkslist):
+    #saves landmark coordinates down in tps format
     tpsfile = open(tpsfilename+'.tps','w') 
     for subj in range(len(subjnames)):
         #get total number of landmarks        
@@ -664,6 +669,7 @@ def saveLandmarks_tps(tpsfilename,subjnames,fixedLandmarkslist, curveLandmarksli
     tpsfile.close()
   
 def define_slidingLandmarks(fixedLandmarks, curveLandmarks,fixedStart_list, fixedEnd_list):
+    #define which landmarks can slide
     import pandas as pd 
     import numpy as np    
     curves = []
